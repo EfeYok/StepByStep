@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, py${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest -q -rs
+
+  windows-exe:
+    name: sbs.exe derle ve dene
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Derle
+        shell: pwsh
+        run: ./packaging/build-windows.ps1
+      - name: Duman testi (gerçek .exe ile uçtan uca)
+        shell: pwsh
+        run: ./packaging/smoke-test.ps1 -Exe dist/sbs.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbs-windows
+          path: dist/sbs.exe
+          if-no-files-found: error
+
+  release:
+    name: Sürüm yayınla
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows-exe
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sbs-windows
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: sbs.exe
+          generate_release_notes: true
