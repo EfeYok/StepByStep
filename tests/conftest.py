@@ -37,7 +37,7 @@ def project(tmp_path) -> Path:
 def write(root: Path, rel: str, text: str) -> Path:
     p = root / rel
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(text, newline="\n")
+    p.write_text(text, encoding="utf-8", newline="\n")
     return p
 
 
@@ -51,5 +51,5 @@ def tree(root: Path) -> dict[str, str]:
         elif p.is_dir():
             out[rel] = "<dir>"
         else:
-            out[rel] = p.read_text()
+            out[rel] = p.read_text(encoding="utf-8")
     return out

@@ -324,8 +324,9 @@ def test_powershell_completion_parses(tmp_path, capsys):
     script.write_text(capsys.readouterr().out, encoding="utf-8")
     shell = __import__("shutil").which("pwsh") or "powershell"
     proc = subprocess.run([shell, "-NoProfile", "-Command",
+                           f"$t = $null; $e = $null; "
                            f"[void][System.Management.Automation.Language.Parser]::ParseFile("
-                           f"'{script}', [ref]$null, [ref]$e); if ($e) {{ $e; exit 1 }}"],
+                           f"'{script}', [ref]$t, [ref]$e); if ($e) {{ $e; exit 1 }}"],
                           capture_output=True, text=True)
     assert proc.returncode == 0, proc.stdout + proc.stderr
 

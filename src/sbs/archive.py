@@ -16,6 +16,7 @@ import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
+from sbs import compat
 from sbs.compat import IS_WINDOWS, make_writable
 from sbs.scan import HASH_CHUNK, Entry, new_hasher
 
@@ -200,10 +201,7 @@ def extract_archive(path: Path, dest: Path, warnings: list[str] | None = None) -
 
 def is_link(p: Path) -> bool:
     """Sembolik bağ veya Windows junction'ı (içine girilmemesi gereken yollar)."""
-    if p.is_symlink():
-        return True
-    is_junction = getattr(p, "is_junction", None)  # Python 3.12+
-    return bool(is_junction and is_junction())
+    return p.is_symlink() or compat.is_junction(p)
 
 
 def _clear_conflict(dest: Path, rel: PurePosixPath, want_dir: bool) -> None:

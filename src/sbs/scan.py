@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from fnmatch import fnmatchcase
 from pathlib import Path
 
+from sbs import compat
+
 HASH_CHUNK = 1024 * 1024
 
 
@@ -110,7 +112,7 @@ def scan(root: Path, excluder: Excluder | None = None) -> ScanResult:
                     continue
                 mode = st.st_mode
                 # Windows junction'ları dizin gibi görünür; bağ olarak saklanır, içine girilmez
-                if stat.S_ISDIR(mode) and getattr(de, "is_junction", lambda: False)():
+                if stat.S_ISDIR(mode) and compat.is_junction(de.path, st):
                     mode = stat.S_IFLNK | stat.S_IMODE(mode)
                 is_dir = stat.S_ISDIR(mode)
                 if excluder and excluder.matches(rel, is_dir):

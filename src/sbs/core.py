@@ -341,7 +341,9 @@ class Vault:
     def _rename_backup_dir(self, target: Target, new_name: str) -> None:
         old_dir = self.target_dir(target)
         new_dir = self.backups_root / new_name
-        if new_dir.exists():
+        # Windows'ta 'proje' → 'Proje' aynı klasördür; bu durumda çakışma yoktur
+        same_dir = old_dir.exists() and new_dir.exists() and os.path.samefile(old_dir, new_dir)
+        if new_dir.exists() and not same_dir:
             raise SbsError(f"vault'ta bu isimde bir klasör zaten var: {new_dir}")
         with self._tx() as c:
             rows = c.execute(

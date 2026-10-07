@@ -134,6 +134,24 @@ def is_hidden(path: Path) -> bool:
     return False
 
 
+def is_junction(path: Path | str, st: os.stat_result | None = None) -> bool:
+    """Windows junction'ı (dizin bağlantı noktası) mı? Python 3.11'de de çalışır.
+
+    Yalnızca IO_REPARSE_TAG_MOUNT_POINT sayılır; OneDrive gibi bulut dosyalarının
+    yeniden ayrıştırma noktaları normal dosya/dizin olarak kalır.
+    """
+    if not IS_WINDOWS:
+        return False
+    try:
+        st = st or os.lstat(path)
+        if not getattr(st, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+            return False
+        tag = getattr(st, "st_reparse_tag", 0) or getattr(os.lstat(path), "st_reparse_tag", 0)
+    except OSError:
+        return False
+    return tag == stat.IO_REPARSE_TAG_MOUNT_POINT
+
+
 def make_writable(path: Path) -> None:
     """Salt okunur dosyayı silinebilir hâle getirir (Windows'ta salt-okunur özniteliği)."""
     try:
