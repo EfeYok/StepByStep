@@ -68,7 +68,8 @@ try {
     Start-Process -FilePath $conhost -ArgumentList $argLine -Wait -WindowStyle Hidden
     if (-not (Test-Path $log)) { throw "conhost --headless ile izleyici günlük yazmadı" }
     Get-Content $log
-    if (-not (Select-String -Path $log -Pattern "yedek alındı" -Quiet)) { throw "izleyici yedek almadı" }
+    # "0 yedek alındı" de eşleşmesin diye yedeğin kendi satırı aranır: "[odev] yedek #3: ..."
+    if (-not (Select-String -Path $log -Pattern "\[odev\] yedek #\d+:" -Quiet)) { throw "izleyici yedek almadı" }
 
     if (-not $SkipService) {
         Step "Görev Zamanlayıcı servisi"
